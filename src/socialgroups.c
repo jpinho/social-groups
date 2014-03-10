@@ -16,11 +16,11 @@
 #define UNDEFINED -1
 
 //data types
-typedef struct node		 { int value; struct node* next;													} node;
-typedef struct list		 { node* head; node* tail; int length;												} list;
-typedef struct vertex	 { int value; list* edges; int scc_index; int low_link;								} vertex;
-typedef struct graph	 { vertex**	vertices; int length;													} graph;
-typedef struct scc_graph { int length; int count_scc; int* vertices; int* scc_s, *scc_f; int count_roots;	} scc_graph;
+typedef struct node		 { int value; struct node* next;						} node;
+typedef struct list		 { node* head; node* tail; int length;					} list;
+typedef struct vertex	 { int value; list* edges; int scc_index; int low_link;	} vertex;
+typedef struct graph	 { vertex**	vertices; int length;                       } graph;
+typedef struct scc_graph { int length; int count_scc; int* vertices; int* scc_s, *scc_f; int count_nonsocial; int scc_max_size;	} scc_graph;
 
 // globals
 vertex** vertices;
@@ -37,8 +37,8 @@ graph* graph_new(int);
 void graph_add(graph*, int, int);
 
 scc_graph* scc_graph_new(int);
-int tarjan_sc(graph*);
-void tarjan_sc_recursive(int);
+scc_graph* tarjan_sc(graph*);
+void tarjan_sc_recursive(int,scc_graph*);
 int tarjan_sc_classify();
 
 //functions - node
@@ -100,14 +100,14 @@ scc_graph* scc_graph_new(int length){
 	g->scc_s = (int*)malloc(length * sizeof(int));
 	g->scc_f = (int*)malloc(length * sizeof(int));
 	g->length = length;
+    g->scc_max_size=0;
 	return g;
 }
 
 // functions - tarjan scc
-int tarjan_sc(graph* g){
+scc_graph* tarjan_sc(graph* g){
 	int i, v, length;
 	scc_graph* result;
-    int res=0;
 	
 	length = n_unvisited = g->length;
 	vertices = g->vertices;
@@ -134,12 +134,11 @@ int tarjan_sc(graph* g){
     
 	do {
 		v = unvisited[0];
-        tarjan_sc_recursive(v);
+        tarjan_sc_recursive(v, result);
     } while(n_unvisited);
     
     result->count_scc = count_scc;
-	result->count_roots = tarjan_sc_classify();
-    res = result->count_roots;
+	result->count_nonsocial = tarjan_sc_classify();
     
     free(sc_stack);
     free(sp);
@@ -147,14 +146,13 @@ int tarjan_sc(graph* g){
     free(low_link_nos);
 	free(unvisited);
 	free(p);
-    free(result);
     
-    return res;
+    return result;
 }
 
-void tarjan_sc_recursive(int v){
+void tarjan_sc_recursive(int v, scc_graph* result){
     node* edge;
-    int w, scc_vertex;
+    int w, scc_vertex, count;
     
     /* add vertex v to the result, and increase the counter for the number of
      * vertices in the result. */
@@ -177,7 +175,7 @@ void tarjan_sc_recursive(int v){
         w = (edge->value - 1);
         
         if(visit_nos[w] == UNDEFINED) {
-			tarjan_sc_recursive(w);
+			tarjan_sc_recursive(w, result);
             
 			/* update low_link no. */
 			if(low_link_nos[w] < low_link_nos[v])
@@ -194,6 +192,7 @@ void tarjan_sc_recursive(int v){
     //if v is a root node, pop the stack and generate an SCC
     if(low_link_nos[v] == visit_nos[v]) {
 		scc_s[count_scc] = n_written;
+        count=0;
         
         /* The SC component vertices are stored from the top of the stack, down
 		 * to v.  Remove these vertices, and write them to the result structure. */
@@ -207,7 +206,11 @@ void tarjan_sc_recursive(int v){
             
 			vertices[sc_vertices[n_written]]->scc_index = count_scc;
 			n_written++;
+            count++;
 		} while(scc_vertex != v);
+        
+        if(count > result->scc_max_size)
+            result->scc_max_size = count;
         
 		scc_f[count_scc] = n_written-1;
 		count_scc++;
@@ -257,7 +260,12 @@ int main(int argc, char* argv[]) {
     for(lineno=0; (lineno < nshares) && (fscanf(stdin, "%d %d\n", &sharedfrom, &sharedto) != EOF); lineno++)
         graph_add(socials, sharedfrom, sharedto);
     
-    printf("%d\n", tarjan_sc(socials)); //solution
+    scc_graph* result = tarjan_sc(socials);
+    printf("%d\n", result->count_scc);
+    printf("%d\n", result->scc_max_size);
+    printf("%d\n", result->count_nonsocial);
+    
+    free(result);
 	free(socials);
 	
 	//toc = clock();
