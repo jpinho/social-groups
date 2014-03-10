@@ -3,7 +3,7 @@
  *  program: SocialGroups
  *
  *  @author João Pinho
- *  @date   02/03/14.
+ *  @date   10/03/14.
  */
 
 #include <stdio.h>
@@ -12,22 +12,22 @@
 #include <math.h>
 #include <time.h>
 
-//constants
+/* constants */
 #define UNDEFINED -1
 
-//data types
+/* data types */
 typedef struct node		 { int value; struct node* next;						} node;
 typedef struct list		 { node* head; node* tail; int length;					} list;
 typedef struct vertex	 { int value; list* edges; int scc_index; int low_link;	} vertex;
 typedef struct graph	 { vertex**	vertices; int length;                       } graph;
 typedef struct scc_graph { int length; int count_scc; int* vertices; int* scc_s, *scc_f; int count_nonsocial; int scc_max_size;	} scc_graph;
 
-// globals
+/* globals */
 vertex** vertices;
 int *sc_vertices, *scc_s, *scc_f, *sc_stack, *sp, *visit_nos, *low_link_nos, *unvisited, *p;
 int n_visited, n_written, count_scc, stack_pos, n_unvisited;
 
-//prototypes
+/* prototypes */
 node* node_new();
 list* list_new();
 void list_add(list*, int);
@@ -37,11 +37,11 @@ graph* graph_new(int);
 void graph_add(graph*, int, int);
 
 scc_graph* scc_graph_new(int);
-scc_graph* tarjan_sc(graph*);
-void tarjan_sc_recursive(int,scc_graph*);
-int tarjan_sc_classify();
+scc_graph* tarjan_scc(graph*);
+void tarjan_scc_recursive(int,scc_graph*);
+int scc_classify_nonsocial();
 
-//functions - node
+/* functions - node */
 node* node_new(){
 	node* n = (node*)malloc(sizeof(node));
 	n->next = NULL;
@@ -49,7 +49,7 @@ node* node_new(){
 	return n;
 }
 
-//functions - vertex
+/* functions - vertex */
 vertex* vertex_new(){
 	vertex* v = (vertex*)malloc(sizeof(vertex));
 	v->edges = NULL;
@@ -57,7 +57,7 @@ vertex* vertex_new(){
 	return v;
 }
 
-//functions - list
+/* functions - list */
 list* list_new(){
 	list* lst = (list*)malloc(sizeof(list));
 	lst->head = lst->tail = NULL;
@@ -76,7 +76,7 @@ void list_add(list* lst, int value){
 	lst->length++;
 }
 
-//functions - graph
+/* functions - graph */
 graph* graph_new(int vertices){
 	graph* grp = (graph*)malloc(sizeof(graph));
 	grp->vertices = (vertex**)calloc(vertices, sizeof(vertex*));
@@ -93,7 +93,7 @@ void graph_add(graph* grp, int vertice, int edge){
 	list_add(grp->vertices[vertice-1]->edges, edge);
 }
 
-//functions - scc graph
+/* functions - scc graph */
 scc_graph* scc_graph_new(int length){
 	scc_graph* g = (scc_graph*)malloc(sizeof(scc_graph));
 	g->vertices = (int*)malloc(length * sizeof(int));
@@ -104,8 +104,8 @@ scc_graph* scc_graph_new(int length){
 	return g;
 }
 
-// functions - tarjan scc
-scc_graph* tarjan_sc(graph* g){
+/* functions - tarjan scc */
+scc_graph* tarjan_scc(graph* g){
 	int i, v, length;
 	scc_graph* result;
 	
@@ -117,7 +117,7 @@ scc_graph* tarjan_sc(graph* g){
     scc_s = result->scc_s;
     scc_f = result->scc_f;
     
-	//support structures init
+	/* support structures init */
     sc_stack = (int*)malloc(length * sizeof(int));
     sp = (int*)malloc(length * sizeof(int));
     visit_nos = (int*)malloc(length * sizeof(int));
@@ -125,7 +125,7 @@ scc_graph* tarjan_sc(graph* g){
 	unvisited = (int*)malloc(length *sizeof(int));
     p = (int*)malloc(length *sizeof(int));
     
-	//integers init
+	/* integers init */
     for(i = 0; i < length; i++) {
 		scc_s[i] = scc_f[i] = visit_nos[i] = sp[i] = UNDEFINED;
 		p[i] = unvisited[i] = i;
@@ -134,11 +134,11 @@ scc_graph* tarjan_sc(graph* g){
     
 	do {
 		v = unvisited[0];
-        tarjan_sc_recursive(v, result);
+        tarjan_scc_recursive(v, result);
     } while(n_unvisited);
     
     result->count_scc = count_scc;
-	result->count_nonsocial = tarjan_sc_classify();
+	result->count_nonsocial = scc_classify_nonsocial();
     
     free(sc_stack);
     free(sp);
@@ -150,7 +150,7 @@ scc_graph* tarjan_sc(graph* g){
     return result;
 }
 
-void tarjan_sc_recursive(int v, scc_graph* result){
+void tarjan_scc_recursive(int v, scc_graph* result){
     node* edge;
     int w, scc_vertex, count;
     
@@ -159,7 +159,7 @@ void tarjan_sc_recursive(int v, scc_graph* result){
     low_link_nos[v] = visit_nos[v] = n_visited;
     n_visited++;
     
-    //remove the visited vertex from the array containing unvisited vertices.
+    /* remove the visited vertex from the array containing unvisited vertices. */
     n_unvisited--;
     scc_vertex = unvisited[p[v]] = unvisited[n_unvisited];
     p[scc_vertex] = p[v];
@@ -169,13 +169,13 @@ void tarjan_sc_recursive(int v, scc_graph* result){
     sp[v] = stack_pos;
     stack_pos++;
     
-    //note the algorithm is like a recursive DFS from each w in v that is still unvisited.
+    /* note the algorithm is like a recursive DFS from each w in v that is still unvisited. */
     edge = vertices[v] == NULL ? NULL : vertices[v]->edges->head;
     while(edge) {
         w = (edge->value - 1);
         
         if(visit_nos[w] == UNDEFINED) {
-			tarjan_sc_recursive(w, result);
+			tarjan_scc_recursive(w, result);
             
 			/* update low_link no. */
 			if(low_link_nos[w] < low_link_nos[v])
@@ -189,7 +189,7 @@ void tarjan_sc_recursive(int v, scc_graph* result){
         edge = edge->next;
     }
     
-    //if v is a root node, pop the stack and generate an SCC
+    /* if v is a root node, pop the stack and generate an SCC */
     if(low_link_nos[v] == visit_nos[v]) {
 		scc_s[count_scc] = n_written;
         count=0;
@@ -217,50 +217,59 @@ void tarjan_sc_recursive(int v, scc_graph* result){
     }
 }
 
-int tarjan_sc_classify(){
-	int scc_connect=0, i, j, count=0;
+int scc_classify_nonsocial(){
+	int scc_connect=0, i, j, count=0, issocial;
 	vertex* the_vertice = NULL;
 	node* edge;
 	int* connections = (int*)calloc(count_scc, sizeof(int));
     
 	for(i=0; i<count_scc; i++){
+        issocial=0;
+        
 		for(j=scc_s[i]; j<=scc_f[i]; j++){
 			the_vertice = vertices[sc_vertices[j]];
-			if(the_vertice == NULL || the_vertice->edges == NULL) continue;
             
+			if(the_vertice == NULL || the_vertice->edges == NULL){
+                continue;
+            }
+
 			edge = the_vertice->edges->head;
 			while(edge != NULL){
 				scc_connect = vertices[(edge->value-1)]->scc_index;
                 
-				if(scc_connect != i && connections[scc_connect] == 0){
-					count++;
-					connections[scc_connect] = 1;
-				}
+				if(scc_connect != i){
+                    issocial=1;
+                    break;
+                }
+                
 				edge = edge->next;
 			}
+            
+            if(issocial)
+                break;
 		}
+        
+        if(!issocial) count++;
 	}
     
     free(connections);
-	return count_scc-count;
+	return count;
 }
 
-/* main - dominoes */
+/* main - socialgroups */
 int main(int argc, char* argv[]) {
 	graph* socials = NULL;
 	int lineno=0, npeople=0, sharedfrom=0, sharedto=0;
 	long nshares=0;
+    scc_graph* result;
     
-	//clock_t tic = clock();
-	//clock_t toc;
-    
-    fscanf(stdin, "%d %ld\n", &npeople, &nshares); //reading test first line
+    fscanf(stdin, "%d %ld\n", &npeople, &nshares);
     socials = graph_new(npeople);
     
     for(lineno=0; (lineno < nshares) && (fscanf(stdin, "%d %d\n", &sharedfrom, &sharedto) != EOF); lineno++)
         graph_add(socials, sharedfrom, sharedto);
     
-    scc_graph* result = tarjan_sc(socials);
+    result = tarjan_scc(socials);
     printf("%d\n", result->count_scc);
     printf("%d\n", result->scc_max_size);
     printf("%d\n", result->count_nonsocial);
@@ -268,9 +277,5 @@ int main(int argc, char* argv[]) {
     free(result);
 	free(socials);
 	
-	//toc = clock();
-    //printf("Elapsed: %f seconds\n", (double)(toc - tic) / CLOCKS_PER_SEC);
-    
 	return 0;
-    
 }
