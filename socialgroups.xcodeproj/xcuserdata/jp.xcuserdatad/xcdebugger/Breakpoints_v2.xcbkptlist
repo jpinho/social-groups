@@ -15,7 +15,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "148"
             endingLineNumber = "148"
-            landmarkName = "tarjan_sc()"
+            landmarkName = "tarjan_scc()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
