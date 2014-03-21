@@ -260,6 +260,9 @@ int main(int argc, char* argv[]) {
 	long nshares=0;
     scc_graph* result;
     
+    clock_t tic = clock();
+	clock_t toc;
+    
     fscanf(stdin, "%d %ld\n", &npeople, &nshares);
     socials = graph_new(npeople);
     
@@ -270,9 +273,12 @@ int main(int argc, char* argv[]) {
     printf("%d\n", result->count_scc);
     printf("%d\n", result->scc_max_size);
     printf("%d\n", result->count_nonsocial);
-    
+
+	toc = clock();
+    printf("Elapsed: %f seconds\n", (double)(toc - tic) / CLOCKS_PER_SEC);
+
     free(result);
 	free(socials);
-	
+
 	return 0;
 }
