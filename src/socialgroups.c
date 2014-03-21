@@ -225,20 +225,15 @@ int scc_classify_nonsocial(){
     
 	for(i=0; i<count_scc; i++){
         issocial=0;
-        /*printf("\nscc[%d] ", i);*/
         
 		for(j=scc_s[i]; j<=scc_f[i]; j++){
 			the_vertice = vertices[sc_vertices[j]];
-            /*printf("vertex[%d]\n",the_vertice->value);*/
 			
-            if(the_vertice == NULL || the_vertice->edges == NULL){
-                continue;
-            }
+            if(the_vertice == NULL || the_vertice->edges == NULL) continue;
 
 			edge = the_vertice->edges->head;
 			while(edge != NULL){
 				scc_connect = vertices[(edge->value-1)]->scc_index;
-                /*printf("edge:%d -> ", edge->value);*/
                 
 				if(scc_connect != i){
                     issocial=1;
@@ -248,11 +243,8 @@ int scc_classify_nonsocial(){
 				edge = edge->next;
 			}
             
-            if(issocial)
-                break;
+            if(issocial) break;
 		}
-        
-        /*if(issocial) printf("scc %d is social\n", i);*/
         
         if(!issocial) count++;
 	}

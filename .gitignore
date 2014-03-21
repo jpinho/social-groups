@@ -1,4 +1,6 @@
 *.log
 bin/*
 *.out.result
-*DS_STORE*
+*DS_STORE
+*socialgroups.dSYM
+*.out
