@@ -1,1 +1,3 @@
-.
+A project about social groups communication, featuring Tarjan algorithm 
+implementation to detect SCCs and determine isolated groups and groups 
+communicating with others in the society.
